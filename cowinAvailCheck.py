@@ -18,6 +18,7 @@ def findavailability(centers):
     return centerswithavailability
 
 def alertuser():
+    # send email here
     pass
 
 
