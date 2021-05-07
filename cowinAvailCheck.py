@@ -4,13 +4,15 @@ import time
 import os
 import smtplib, ssl
 from email.mime.text import MIMEText
-from datetime import date
+from datetime import date, datetime
 
 today = date.today()
 todaysdate = today.strftime("%d-%m-%Y")
 district_id=308 #palakkad
-intervalTime=10
-
+intervalTime=60
+sender_email=os.environ.get("temp_email_address")
+password=os.environ.get("temp_email_password")
+receiver_email = os.environ.get("my_email_address")
 
 
 def jprint(obj):
@@ -28,7 +30,7 @@ def findavailability(centers):
                 centerswithavailability.append(center)
     return centerswithavailability
 
-def alertuser(centers):
+def messagetosent(centers):
     
     subject="vaccination slot available"
     message=""
@@ -38,11 +40,10 @@ def alertuser(centers):
             message+="           ---"+ session["date"] + "(" + str(session["available_capacity"]) + " doses)  \n"
         message+="--------------------------------------\n"
     message+="\n\n this message was sent by anoop through a python script\n"
-    print(message)
-    sentMail(subject,message)
+    return subject,message
 
 
-def getData():
+def getData(district_id,todaysdate):
     apiurl="https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByDistrict"
     parameters={"district_id":district_id,"date":todaysdate}
     header={"Accept-Language": "hi_IN", 'User-Agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"}
@@ -50,10 +51,8 @@ def getData():
     response = requests.get(url=apiurl,params=parameters,headers=header)
     return response
 
-def sentMail(subject,message):
-    sender_email=os.environ.get("temp_email_address")
-    password=os.environ.get("temp_email_password")
-    receiver_email = os.environ.get("my_email_address")
+def sentMail(sender_email, password, receiver_email, subject,message):
+    
     port = 465  # For SSL
     smtp_server = "smtp.gmail.com"
 
@@ -79,7 +78,7 @@ def sentMail(subject,message):
 if __name__=="__main__":
 
     while True:
-        response = getData()
+        response = getData(district_id,todaysdate)
         if response.status_code==200:
             print("status code=",response.status_code)
             centers=response.json()["centers"]
@@ -88,8 +87,15 @@ if __name__=="__main__":
             if len(availableCenters):
                 # jprint(availableCenters)
                 print("tadaa!!")
-                alertuser(availableCenters)
+                subject ,msg = messagetosent(availableCenters)
+                sentMail(sender_email, password, receiver_email,subject,msg)
                 quit()
+
             else:
-                print("no available centers")
+                now = datetime.now()
+                current_time = now.strftime("%H:%M:%S")
+                # print("Current Time =", current_time)
+                print("no available centers (",current_time,")")
+        else:
+            print("error: response code= ",response.status_code)
         time.sleep(intervalTime)
