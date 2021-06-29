@@ -5,11 +5,17 @@ import os
 import smtplib, ssl
 from email.mime.text import MIMEText
 from datetime import date, datetime
+from playsound import playsound
 
 today = date.today()
 todaysdate = today.strftime("%d-%m-%Y")
-district_id=308 #palakkad
-intervalTime=60
+# district_id=308 #palakkad 308
+# district_id=202 #palakkad 308
+district_id=int(input("enter district id - ")) #palakkad 308
+
+
+
+intervalTime=20
 sender_email=os.environ.get("temp_email_address")
 password=os.environ.get("temp_email_password")
 receiver_email = os.environ.get("my_email_address")
@@ -87,15 +93,17 @@ if __name__=="__main__":
             if len(availableCenters):
                 # jprint(availableCenters)
                 print("tadaa!!")
+                print(availableCenters)
                 subject ,msg = messagetosent(availableCenters)
                 sentMail(sender_email, password, receiver_email,subject,msg)
+                playsound('sound.mp3')
                 quit()
 
             else:
                 now = datetime.now()
                 current_time = now.strftime("%H:%M:%S")
                 # print("Current Time =", current_time)
-                print("no available centers (",current_time,")")
+                print("no available centers at district id = ",district_id," (",current_time,")")
         else:
             print("error: response code= ",response.status_code)
         time.sleep(intervalTime)
